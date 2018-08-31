@@ -5,8 +5,8 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 module.exports = {
   entry: './src/index.js',
   output: {
-    path: path.join(__dirname, '/dist'),
-    filename: 'index_bundle.js',
+    path: path.join(__dirname, '/build'),
+    filename: 'bundle.js',
   },
   module: {
     rules: [
@@ -35,4 +35,8 @@ module.exports = {
       }
     ]),
   ],
+  devServer: {
+    stats: 'errors-only',
+    port: 3000,
+  },
 };
