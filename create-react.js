@@ -29,38 +29,39 @@ const BgWhite = '\x1b[47m';
 
 const sourcePath = `${ __dirname }/source`;
 
+
+
 const isDirectory = (directoryPath) => {
   return fs.statSync(directoryPath).isDirectory();
 };
 
-const copyFiles = (path) => {
-  if (!path) return undefined;
-  if (!path.from || !path.to) return undefined;
+
+
+const createFilesListSync = (path, filesToCopy = []) => {
 
   const files = fs.readdirSync(path.from);
 
   files.forEach((file) => {
-    const fileSource = `${ path.from }/${ file }`;   
-    const fileDestination = fileSource.replace(path.from + '/', path.to);
 
+    const fileSource = `${ path.from }/${ file }`;
+    const fileDestination = fileSource.replace(`${ path.from }/`, path.to);
+    
     if (isDirectory(fileSource)) {
-      fs.mkdirSync(fileDestination);
-      copyFiles({
+
+      createFilesListSync({
         from: fileSource,
-        to: fileDestination + '/',
-      });
-    } else {
-      fs.copyFileSync(fileSource, fileDestination);
+        to: `${ fileDestination }/`,
+      }, filesToCopy);
+
     }
+
+    filesToCopy.push({
+      from: fileSource,
+      to: fileDestination,
+    });
+    
   });
+
+  return filesToCopy;
+
 };
-
-copyFiles({
-  from: sourcePath,
-  to: '',
-});
-
-// copyFiles({
-//   from: `${ __dirname }/prebuilt/router`,
-//   to: 'src/'
-// });
