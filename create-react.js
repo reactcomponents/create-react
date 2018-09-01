@@ -12,6 +12,7 @@ const Hidden = '\x1b[8m';
 const FgBlack = '\x1b[30m';
 const FgRed = '\x1b[31m';
 const FgGreen = '\x1b[32m';
+const FgLightGreen = '\x1b[92m';
 const FgYellow = '\x1b[33m';
 const FgBlue = '\x1b[34m';
 const FgMagenta = '\x1b[35m';
@@ -87,22 +88,22 @@ const copyFileSync = (file, callback) => {
   fs.copyFile(file.from, file.to, (err) => {
     if (err) console.error(err);
     else {
-      console.log(`\t\u2714  ${ file.to }`);
-
       if (typeof callback === 'function') {
         callback();
       }
     }
   });
 
-}
+};
 
 
 
 const copyFile = (file) => {
 
   return new Promise((resolve) => {
-    copyFileSync(file, resolve);
+    copyFileSync(file, () => {
+      setTimeout(resolve, 10);
+    });
   });
 
 };
@@ -114,8 +115,6 @@ const makeDirectorySync = (path, callback) => {
   fs.mkdir(path.to, (err) => {
     if (err) console.error(err);
     else {
-      console.log(`\t\u2714  ${ path.to }`);
-
       if (typeof callback === 'function') {
         callback();
       }
@@ -129,7 +128,9 @@ const makeDirectorySync = (path, callback) => {
 const makeDirectory = (path) => {
 
   return new Promise((resolve) => {
-    makeDirectorySync(path, resolve);
+    makeDirectorySync(path, () => {
+      setTimeout(resolve, 10);
+    });
   });
 
 };
@@ -151,11 +152,15 @@ const copyAllFilesSync = async (options, callback) => {
 
     const file = filesList.shift();
 
+    console.log(`\t-   ${ file.to }`);
+
     if (isDirectory(file.from)) {
       await makeDirectory(file);
     } else {
       await copyFile(file);
     }
+
+    console.log(`\x1b[1A\x1b[K\t${ FgLightGreen }\u2714   ${ FgWhite }${ file.to }${ Reset }`);
 
     if (filesList.length === 0) {
       if (typeof callback === 'function') {
@@ -179,3 +184,19 @@ const copyAllFiles = (options) => {
   });
   
 };
+
+
+
+copyAllFiles({
+  from: sourcePath,
+  to: '',
+})
+.then(() => {
+
+  copyAllFiles({
+    from: `${ __dirname }/prebuilt/router`,
+    to: 'src/'
+  });
+
+})
+.catch(() => {});
