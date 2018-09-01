@@ -65,3 +65,17 @@ const createFilesListSync = (path, filesToCopy = []) => {
   return filesToCopy;
 
 };
+
+
+
+const createFilesList = (path) => {
+
+  const filesList = createFilesListSync(path);
+  
+  return new Promise((resolve) => {
+    if (Array.isArray(filesList)) {
+      resolve(filesList);
+    }
+  });
+
+};
