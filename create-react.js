@@ -133,3 +133,36 @@ const makeDirectory = (path) => {
   });
 
 };
+
+
+
+const copyAllFilesSync = async (options) => {
+
+  if (!options) return undefined;
+  if (options.from === undefined || options.to === undefined) return undefined;
+
+  const files = await createFilesList(options);
+
+  files.sort((a, b) => {
+    return a.from.split('/').length - b.from.split('/').length;
+  });
+
+  const recur = async (filesList) => {
+
+    const file = filesList.shift();
+
+    if (isDirectory(file.from)) {
+      await makeDirectory(file);
+    } else {
+      await copyFile(file);
+    }
+
+    if (filesList.length === 0) {
+      return true;
+    }
+    return recur(filesList);
+  };
+
+  return recur(files);
+
+};
