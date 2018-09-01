@@ -106,3 +106,20 @@ const copyFile = (file) => {
   });
 
 };
+
+
+
+const makeDirectorySync = (path, callback) => {
+
+  fs.mkdir(path.to, (err) => {
+    if (err) console.error(err);
+    else {
+      console.log(`\t\u2714  ${ path.to }`);
+
+      if (typeof callback === 'function') {
+        callback();
+      }
+    }
+  });
+
+};
