@@ -11,13 +11,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/reactcomponents/create-react-website.git"
+    "url": "git+https://github.com/reactcomponents/create-react.git"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
-    "url": "https://github.com/reactcomponents/create-react-website/issues"
+    "url": "https://github.com/reactcomponents/create-react/issues"
   },
-  "homepage": "https://github.com/reactcomponents/create-react-website#readme"
+  "homepage": "https://github.com/reactcomponents/create-react#readme"
 }
