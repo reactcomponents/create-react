@@ -123,3 +123,13 @@ const makeDirectorySync = (path, callback) => {
   });
 
 };
+
+
+
+const makeDirectory = (path) => {
+
+  return new Promise((resolve) => {
+    makeDirectorySync(path, resolve);
+  });
+
+};
