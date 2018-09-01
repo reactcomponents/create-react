@@ -136,7 +136,7 @@ const makeDirectory = (path) => {
 
 
 
-const copyAllFilesSync = async (options) => {
+const copyAllFilesSync = async (options, callback) => {
 
   if (!options) return undefined;
   if (options.from === undefined || options.to === undefined) return undefined;
@@ -158,6 +158,9 @@ const copyAllFilesSync = async (options) => {
     }
 
     if (filesList.length === 0) {
+      if (typeof callback === 'function') {
+        callback();
+      }
       return true;
     }
     return recur(filesList);
@@ -170,13 +173,9 @@ const copyAllFilesSync = async (options) => {
 
 
 const copyAllFiles = (options) => {
-
-  const copyFiles = copyAllFilesSync(options);
-
+  
   return new Promise((resolve) => {
-    if (copyFiles) {
-      resolve();
-    }
+    copyAllFilesSync(options, resolve);
   });
   
 };
