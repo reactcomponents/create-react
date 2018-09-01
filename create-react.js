@@ -166,3 +166,17 @@ const copyAllFilesSync = async (options) => {
   return recur(files);
 
 };
+
+
+
+const copyAllFiles = (options) => {
+
+  const copyFiles = copyAllFilesSync(options);
+
+  return new Promise((resolve) => {
+    if (copyFiles) {
+      resolve();
+    }
+  });
+  
+};
