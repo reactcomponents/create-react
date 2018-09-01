@@ -96,3 +96,13 @@ const copyFileSync = (file, callback) => {
   });
 
 }
+
+
+
+const copyFile = (file) => {
+
+  return new Promise((resolve) => {
+    copyFileSync(file, resolve);
+  });
+
+};
