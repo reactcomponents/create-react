@@ -79,3 +79,20 @@ const createFilesList = (path) => {
   });
 
 };
+
+
+
+const copyFileSync = (file, callback) => {
+
+  fs.copyFile(file.from, file.to, (err) => {
+    if (err) console.error(err);
+    else {
+      console.log(`\t\u2714  ${ file.to }`);
+
+      if (typeof callback === 'function') {
+        callback();
+      }
+    }
+  });
+
+}
