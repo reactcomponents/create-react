@@ -8,7 +8,7 @@ const Underscore = '\x1b[4m';
 const Blink = '\x1b[5m';
 const Reverse = '\x1b[7m';
 const Hidden = '\x1b[8m';
- 
+
 const FgBlack = '\x1b[30m';
 const FgRed = '\x1b[31m';
 const FgGreen = '\x1b[32m';
@@ -16,10 +16,12 @@ const FgLightGreen = '\x1b[92m';
 const FgYellow = '\x1b[33m';
 const FgBlue = '\x1b[34m';
 const FgMagenta = '\x1b[35m';
+const FgLightMagenta = '\x1b[95m';
 const FgCyan = '\x1b[36m';
 const FgWhite = '\x1b[37m';
- 
+
 const BgBlack = '\x1b[40m';
+const BgDarkGray = '\x1b[100m';
 const BgRed = '\x1b[41m';
 const BgGreen = '\x1b[42m';
 const BgYellow = '\x1b[43m';
@@ -30,6 +32,8 @@ const BgWhite = '\x1b[47m';
 
 const sourcePath = `${ __dirname }/source`;
 
+console.log(`\n${ FgCyan }${ Bright }CREATE-REACT ${ Reset }`);
+console.log(`${ Dim }~~~~~~~~~~~~${ Reset }\n`);
 
 
 const isDirectory = (directoryPath) => {
@@ -38,7 +42,7 @@ const isDirectory = (directoryPath) => {
 
 
 
-const createFilesListSync = (path, filesToCopy = []) => {
+const createFilesListSync = (path, filesToCopy = [], foldersToMake = []) => {
 
   const files = fs.readdirSync(path.from);
 
@@ -52,30 +56,36 @@ const createFilesListSync = (path, filesToCopy = []) => {
       createFilesListSync({
         from: fileSource,
         to: `${ fileDestination }/`,
-      }, filesToCopy);
+      }, filesToCopy, foldersToMake);
 
+      foldersToMake.push(fileDestination);
+
+    } else {
+
+      filesToCopy.push({
+        from: fileSource,
+        to: fileDestination,
+      });
+    
     }
-
-    filesToCopy.push({
-      from: fileSource,
-      to: fileDestination,
-    });
     
   });
 
-  return filesToCopy;
+  return {
+    filesToCopy,
+    foldersToMake,
+  };
 
 };
 
 
 
 const createFilesList = (path) => {
-
-  const filesList = createFilesListSync(path);
   
   return new Promise((resolve) => {
-    if (Array.isArray(filesList)) {
-      resolve(filesList);
+    const list = createFilesListSync(path);
+    if (Array.isArray(list.filesToCopy) && Array.isArray(list.foldersToMake)) {
+      resolve(list);
     }
   });
 
@@ -102,7 +112,7 @@ const copyFile = (file) => {
 
   return new Promise((resolve) => {
     copyFileSync(file, () => {
-      setTimeout(resolve, 10);
+      setTimeout(resolve, 100);
     });
   });
 
@@ -112,7 +122,7 @@ const copyFile = (file) => {
 
 const makeDirectorySync = (path, callback) => {
 
-  fs.mkdir(path.to, (err) => {
+  fs.mkdir(path, (err) => {
     if (err) console.error(err);
     else {
       if (typeof callback === 'function') {
@@ -129,7 +139,7 @@ const makeDirectory = (path) => {
 
   return new Promise((resolve) => {
     makeDirectorySync(path, () => {
-      setTimeout(resolve, 10);
+      setTimeout(resolve, 100);
     });
   });
 
@@ -137,41 +147,84 @@ const makeDirectory = (path) => {
 
 
 
-const copyAllFilesSync = async (options, callback) => {
-
-  if (!options) return undefined;
-  if (options.from === undefined || options.to === undefined) return undefined;
-
-  const files = await createFilesList(options);
-
-  files.sort((a, b) => {
-    return a.from.split('/').length - b.from.split('/').length;
+const makeDirectoriesSync = (foldersToMake, callback) => {
+  
+  foldersToMake.sort((a, b) => {
+    return a.split('/').length - b.split('/').length;
   });
+  
+  const recur = async (folders) => {
 
-  const recur = async (filesList) => {
-
-    const file = filesList.shift();
-
-    console.log(`\t-   ${ file.to }`);
-
-    if (isDirectory(file.from)) {
-      await makeDirectory(file);
-    } else {
-      await copyFile(file);
-    }
-
-    console.log(`\x1b[1A\x1b[K\t${ FgLightGreen }\u2714   ${ FgWhite }${ file.to }${ Reset }`);
-
-    if (filesList.length === 0) {
+    if (folders.length === 0) {
       if (typeof callback === 'function') {
         callback();
       }
       return true;
     }
+
+    const folder = folders.shift();
+
+    // console.log(`     -  ${ folder }`);
+
+    await makeDirectory(folder);
+
+    // console.log(`\x1b[1A\x1b[K     ${ FgCyan }\u2714${ Reset }  ${ FgWhite }${ folder }${ Reset }`);
+
+    return recur(folders);
+    
+  };
+
+  return recur(foldersToMake);
+
+};
+
+
+
+const makeDirectories = (folders) => {
+
+  return new Promise((resolve) => {
+    makeDirectoriesSync(folders, resolve);
+  });
+
+};
+
+
+
+const copyAllFilesSync = async (options, callback) => {
+  if (!options) return undefined;
+  if (options.from === undefined || options.to === undefined) return undefined;
+
+  console.log(`  ${ FgLightGreen }\u2714${ Reset }  ${ FgLightGreen }${ options.title || '' }${ Reset }\n`);
+
+  const {
+    filesToCopy,
+    foldersToMake,
+  } = await createFilesList(options);
+
+  await makeDirectories(foldersToMake);
+
+  const recur = async (filesList) => {
+    
+    if (filesList.length === 0) {
+      if (typeof callback === 'function') {
+        console.log('\n');
+        callback();
+      }
+      return true;
+    }
+
+    const file = filesList.shift();
+
+    console.log(`    -  ${ file.to }`);
+
+    await copyFile(file);
+
+    console.log(`\x1b[1A\x1b[K     ${ FgCyan }\u2714${ Reset }  ${ FgWhite }${ file.to }${ Reset }`);
+
     return recur(filesList);
   };
 
-  return recur(files);
+  return recur(filesToCopy);
 
 };
 
@@ -190,12 +243,14 @@ const copyAllFiles = (options) => {
 copyAllFiles({
   from: sourcePath,
   to: '',
+  title: 'Essentials',
 })
 .then(() => {
 
   copyAllFiles({
     from: `${ __dirname }/prebuilt/router`,
-    to: 'src/'
+    to: 'src/',
+    title: 'Router',
   });
 
 })
