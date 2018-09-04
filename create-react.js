@@ -1,7 +1,11 @@
 #!/usr/bin/env node
 const fs = require('fs');
+const readline = require('readline');
 
+const ClearScreen = '\x1b[2J';
 const Reset  = '\x1b[0m';
+const MoveCursorTopLeft = '\033[H';
+
 const Bright = '\x1b[1m';
 const Dim = '\x1b[2m';
 const Underscore = '\x1b[4m';
@@ -32,13 +36,51 @@ const BgWhite = '\x1b[47m';
 
 const sourcePath = `${ __dirname }/source`;
 
-console.log(`\n${ FgCyan }${ Bright }CREATE-REACT ${ Reset }`);
-console.log(`${ Dim }~~~~~~~~~~~~${ Reset }\n`);
 
 
 const isDirectory = (directoryPath) => {
   return fs.statSync(directoryPath).isDirectory();
 };
+
+
+
+const getUserInput = (textPrompt, choicesRegEx) => {
+
+  return new Promise((resolve, reject) => {
+    
+    const prompt = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+    
+    prompt.question(textPrompt, (userInput) => {
+      if (choicesRegEx) {
+        if (choicesRegEx.test(userInput)) {
+          resolve(userInput);
+        } else {
+          reject(userInput);
+        }
+      } else {
+        resolve(userInput);
+      }
+      console.log('\n');
+      prompt.close();
+    });
+    
+  });
+
+};
+
+
+
+const yesno = (textPrompt) => {
+
+  const regex = new RegExp(/^(y|yes)$/gi);
+
+  return getUserInput(`${ textPrompt } ${ Dim }[y/n] \n> ${ Reset }`, regex);
+
+};
+
 
 
 
@@ -123,7 +165,7 @@ const copyFile = (file) => {
 const makeDirectorySync = (path, callback) => {
 
   fs.mkdir(path, (err) => {
-    if (err) console.error(err);
+    if (err) console.log(err);
     else {
       if (typeof callback === 'function') {
         callback();
@@ -164,11 +206,7 @@ const makeDirectoriesSync = (foldersToMake, callback) => {
 
     const folder = folders.shift();
 
-    // console.log(`     -  ${ folder }`);
-
     await makeDirectory(folder);
-
-    // console.log(`\x1b[1A\x1b[K     ${ FgCyan }\u2714${ Reset }  ${ FgWhite }${ folder }${ Reset }`);
 
     return recur(folders);
     
@@ -194,7 +232,7 @@ const copyAllFilesSync = async (options, callback) => {
   if (!options) return undefined;
   if (options.from === undefined || options.to === undefined) return undefined;
 
-  console.log(`  ${ FgLightGreen }\u2714${ Reset }  ${ FgLightGreen }${ options.title || '' }${ Reset }\n`);
+  console.log(`  ${ FgLightGreen }\u2714${ Reset }  ${ FgLightGreen }${ options.title || '' }${ Reset }`);
 
   const {
     filesToCopy,
@@ -206,8 +244,8 @@ const copyAllFilesSync = async (options, callback) => {
   const recur = async (filesList) => {
     
     if (filesList.length === 0) {
+      console.log('');
       if (typeof callback === 'function') {
-        console.log('\n');
         callback();
       }
       return true;
@@ -240,18 +278,35 @@ const copyAllFiles = (options) => {
 
 
 
-copyAllFiles({
-  from: sourcePath,
-  to: '',
-  title: 'Essentials',
-})
-.then(() => {
 
-  copyAllFiles({
-    from: `${ __dirname }/prebuilt/router`,
-    to: 'src/',
-    title: 'Router',
+
+
+console.log(ClearScreen);
+console.log(MoveCursorTopLeft);
+
+console.log(`${ FgCyan }${ Bright }CREATE-REACT${ Reset }`);
+console.log(`${ Dim }~~~~~~~~~~~~${ Reset }\n`);
+
+yesno('Do you want to continue?')
+  .then((input) => {
+
+    copyAllFiles({
+      from: sourcePath,
+      to: '',
+      title: 'Essentials',
+    })
+    .then(() => {
+    
+      copyAllFiles({
+        from: `${ __dirname }/prebuilt/router`,
+        to: 'src/',
+        title: 'Router',
+      });
+    
+    })
+    .catch(() => {});
+
+  })
+  .catch((err) => {
+    console.log(`\n${ BgMagenta } EXITED ${ Reset }`);
   });
-
-})
-.catch(() => {});
