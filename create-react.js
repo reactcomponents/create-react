@@ -50,9 +50,9 @@ const getUserInput = (textPrompt, choicesRegEx) => {
     
     const prompt = readline.createInterface({
       input: process.stdin,
-      output: process.stdout
+      output: process.stdout,
     });
-    
+
     prompt.question(textPrompt, (userInput) => {
       if (choicesRegEx) {
         if (choicesRegEx.test(userInput)) {
@@ -63,7 +63,7 @@ const getUserInput = (textPrompt, choicesRegEx) => {
       } else {
         resolve(userInput);
       }
-      console.log('\n');
+      console.log('');
       prompt.close();
     });
     
@@ -278,6 +278,32 @@ const copyAllFiles = (options) => {
 
 
 
+const runInOrder = (fn, arguments = []) => {
+
+  return new Promise((resolve, reject) => {
+
+    const recur = () => {
+      
+      const thisArgument = arguments.shift();
+
+      fn(thisArgument)
+        .then(() => {
+          
+          if (arguments.length > 0) {
+            recur();
+          } else {
+            resolve();
+          }
+
+        })
+        .catch((err) => reject(err));
+    };
+
+    recur();
+
+  });
+
+};
 
 
 
@@ -289,24 +315,26 @@ console.log(`${ Dim }~~~~~~~~~~~~${ Reset }\n`);
 
 yesno('Do you want to continue?')
   .then((input) => {
-
-    copyAllFiles({
-      from: sourcePath,
-      to: '',
-      title: 'Essentials',
-    })
-    .then(() => {
     
-      copyAllFiles({
+    const copyOrder = [
+      {
+        from: sourcePath,
+        to: '',
+        title: 'Essentials',
+      },
+      {
         from: `${ __dirname }/prebuilt/router`,
         to: 'src/',
         title: 'Router',
+      }
+    ];
+
+    runInOrder(copyAllFiles, copyOrder)
+      .then(() => {
+        console.log(`\n${ BgCyan }${ FgWhite }${ Bright } DONE ${ Reset }`);
       });
-    
-    })
-    .catch(() => {});
 
   })
   .catch((err) => {
-    console.log(`\n${ BgMagenta } EXITED ${ Reset }`);
+    console.log(`\n${ BgRed } EXITED ${ Reset }`);
   });
