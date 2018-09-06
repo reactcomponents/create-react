@@ -376,6 +376,17 @@ class MultipleChoice {
       };
     });
   }
+
+  renderOptions() {
+    this.options.forEach((option, index) => {
+      const optionText = `${ option }`;
+      if (index === this.current) {
+        console.log(`${ ClearLine }${ FgYellow } \u2714 ${ optionText }`, Reset);
+      } else {
+        console.log(`${ ClearLine }${ Dim } \u2022 ${ optionText }`, Reset);
+      }
+    });
+  }
 }
 
 
