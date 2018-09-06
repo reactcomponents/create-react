@@ -387,6 +387,22 @@ class MultipleChoice {
       }
     });
   }
+
+  moveUp() {
+    if (this.current > 0) {
+      this.current--;
+    }
+    console.log(`\x1b[${ this.options.length + 1 }A`);
+    this.renderOptions();
+  }
+
+  moveDown() {
+    if (this.current < this.options.length - 1) {
+      this.current++;
+    }
+    console.log(`\x1b[${ this.options.length + 1 }A`);
+    this.renderOptions();
+  }
 }
 
 
