@@ -3,8 +3,10 @@ const fs = require('fs');
 const readline = require('readline');
 
 const ClearScreen = '\x1b[2J';
+const ClearLine = '\x1b[K';
 const Reset  = '\x1b[0m';
 const MoveCursorTopLeft = '\033[H';
+const HideCursor = '\033[?25l';
 
 const Bright = '\x1b[1m';
 const Dim = '\x1b[2m';
@@ -34,6 +36,16 @@ const BgMagenta = '\x1b[45m';
 const BgCyan = '\x1b[46m';
 const BgWhite = '\x1b[47m';
 
+const keyCode = {
+  up: '\x1b\x5b\x41',
+  down: '\x1b\x5b\x42',
+  right: '\x1b\x5b\x43',
+  left: '\x1b\x5b\x44',
+
+  enter: '\x0D',
+  ctrlC: '\x03',
+};
+
 const sourcePath = `${ __dirname }/source`;
 
 
@@ -45,98 +57,99 @@ const isDirectory = (directoryPath) => {
 
 
 const getUserInput = (textPrompt, choicesRegEx) => {
-
+  
   return new Promise((resolve, reject) => {
     
     const prompt = readline.createInterface({
       input: process.stdin,
       output: process.stdout,
     });
-
+    
     prompt.question(textPrompt, (userInput) => {
-      if (choicesRegEx) {
-        if (choicesRegEx.test(userInput)) {
-          resolve(userInput);
-        } else {
-          reject(userInput);
-        }
-      } else {
-        resolve(userInput);
-      }
-      console.log('');
-      prompt.close();
-    });
-    
-  });
-
-};
-
-
-
-const yesno = (textPrompt) => {
-
-  const regex = new RegExp(/^(y|yes)$/gi);
-
-  return getUserInput(`${ textPrompt } ${ Dim }[y/n] \n> ${ Reset }`, regex);
-
-};
-
-
-
-
-const createFilesListSync = (path, filesToCopy = [], foldersToMake = []) => {
-
-  const files = fs.readdirSync(path.from);
-
-  files.forEach((file) => {
-
-    const fileSource = `${ path.from }/${ file }`;
-    const fileDestination = fileSource.replace(`${ path.from }/`, path.to);
-    
-    if (isDirectory(fileSource)) {
-
-      createFilesListSync({
-        from: fileSource,
-        to: `${ fileDestination }/`,
-      }, filesToCopy, foldersToMake);
-
-      foldersToMake.push(fileDestination);
-
-    } else {
-
-      filesToCopy.push({
-        from: fileSource,
-        to: fileDestination,
-      });
-    
-    }
-    
-  });
-
-  return {
-    filesToCopy,
-    foldersToMake,
-  };
-
-};
-
-
-
-const createFilesList = (path) => {
-  
-  return new Promise((resolve) => {
-    const list = createFilesListSync(path);
-    if (Array.isArray(list.filesToCopy) && Array.isArray(list.foldersToMake)) {
-      resolve(list);
-    }
-  });
-
-};
-
-
-
-const copyFileSync = (file, callback) => {
-
+      console.log(userInput);
+      // if (choicesRegEx) {
+        //   if (choicesRegEx.test(userInput)) {
+          //     resolve(userInput);
+          //   } else {
+            //     reject(userInput);
+            //   }
+            // } else {
+              //   resolve(userInput);
+              // }
+              console.log('');
+              // prompt.close();
+            });
+            
+          });
+          
+        };
+        
+        
+        
+        const yesno = (textPrompt) => {
+          
+          const regex = new RegExp(/^(y|yes)$/gi);
+          
+          return getUserInput(`${ textPrompt } ${ Dim }[y/n] \n> ${ Reset }`, regex);
+          
+        };
+        
+        
+        
+        
+        const createFilesListSync = (path, filesToCopy = [], foldersToMake = []) => {
+          
+          const files = fs.readdirSync(path.from);
+          
+          files.forEach((file) => {
+            
+            const fileSource = `${ path.from }/${ file }`;
+            const fileDestination = fileSource.replace(`${ path.from }/`, path.to);
+            
+            if (isDirectory(fileSource)) {
+              
+              createFilesListSync({
+                from: fileSource,
+                to: `${ fileDestination }/`,
+              }, filesToCopy, foldersToMake);
+              
+              foldersToMake.push(fileDestination);
+              
+            } else {
+              
+              filesToCopy.push({
+                from: fileSource,
+                to: fileDestination,
+              });
+              
+            }
+            
+          });
+          
+          return {
+            filesToCopy,
+            foldersToMake,
+          };
+          
+        };
+        
+        
+        
+        const createFilesList = (path) => {
+          
+          return new Promise((resolve) => {
+            const list = createFilesListSync(path);
+            if (Array.isArray(list.filesToCopy) && Array.isArray(list.foldersToMake)) {
+              resolve(list);
+            }
+          });
+          
+        };
+        
+        
+        
+        const copyFileSync = (file, callback) => {
+          
   fs.copyFile(file.from, file.to, (err) => {
     if (err) console.error(err);
     else {
@@ -304,6 +317,45 @@ const runInOrder = (fn, arguments = []) => {
   });
 
 };
+
+
+
+class MultipleChoice {
+  constructor(options) {
+    this.question = '';
+    this.options = options;
+    this.current = 0;
+    this.selected = false;
+
+    this.onSelect = () => {  };
+
+    process.stdin.setRawMode(true);
+    process.stdin.setEncoding('utf8');
+
+    process.stdin.on('data', (key) => {
+      switch (key) {
+        case keyCode.up:
+          this.moveUp();
+          return;
+
+        case keyCode.down:
+          this.moveDown();
+          return;
+
+        case keyCode.enter:
+          this.select();
+          return;
+
+        case keyCode.ctrlC:
+          process.exit();
+          return;
+
+        default:
+          return;
+      }
+    });
+  }
+}
 
 
 
