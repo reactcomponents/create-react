@@ -403,10 +403,42 @@ class MultipleChoice {
     console.log(`\x1b[${ this.options.length + 1 }A`);
     this.renderOptions();
   }
+
+  select() {
+    const selectedOption = this.options[this.current];
+    
+    const consoleClear = `\x1b[${ this.options.length }A\x1b[0J`;
+    // const consoleQuestion = `${ FgCyan }${ this.question }`;
+    const consoleHint = `${ Dim }a:${ Reset }`;
+    const consoleAnswer = `${ FgYellow }${ selectedOption }${ Reset }`;
+
+    console.log(`${ consoleClear }${ consoleHint } ${ consoleAnswer }`);
+    
+    this.selected = true;
+    this.onSelect();
+  }
 }
 
 
 
+const options = [
+  'Apple',
+  'Orange',
+  'Grapes',
+  'Strawberry',
+  'Banana',
+];
+
+const mc = new MultipleChoice(options);
+
+mc.prompt('What is your favorite fruit?')
+  .then((res) => {
+
+
+  });
+
+
+  
 console.log(ClearScreen);
 console.log(MoveCursorTopLeft);
 
