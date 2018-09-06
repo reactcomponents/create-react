@@ -355,6 +355,27 @@ class MultipleChoice {
       }
     });
   }
+
+  prompt(question) {
+    this.question = question;
+
+    return new Promise((resolve, reject) => {
+      console.log(`${ FgCyan }${ question }`, Reset);
+
+      this.renderOptions();
+
+      process.stdin.resume();
+      
+      this.onSelect = () => {
+        process.stdin.pause();
+        resolve({
+          selection: this.options[this.current],
+          index: this.current,
+          options: this.options,
+        });
+      };
+    });
+  }
 }
 
 
