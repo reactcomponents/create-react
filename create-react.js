@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 const fs = require('fs');
 const readline = require('readline');
+const childProcess = require('child_process');
 
 const ClearScreen = '\x1b[2J';
 const ClearLine = '\x1b[K';
 const Reset  = '\x1b[0m';
 const MoveCursorTopLeft = '\033[H';
-const HideCursor = '\033[?25l';
+const HideCursor = '\x1b[?25l';
+const ShowCursor = '\x1b[?25h';
 
 const Bright = '\x1b[1m';
 const Dim = '\x1b[2m';
@@ -66,89 +68,88 @@ const getUserInput = (textPrompt, choicesRegEx) => {
     });
     
     prompt.question(textPrompt, (userInput) => {
-      console.log(userInput);
-      // if (choicesRegEx) {
-        //   if (choicesRegEx.test(userInput)) {
-          //     resolve(userInput);
-          //   } else {
-            //     reject(userInput);
-            //   }
-            // } else {
-              //   resolve(userInput);
-              // }
-              console.log('');
-              // prompt.close();
-            });
-            
-          });
-          
-        };
-        
-        
-        
-        const yesno = (textPrompt) => {
-          
-          const regex = new RegExp(/^(y|yes)$/gi);
-          
-          return getUserInput(`${ textPrompt } ${ Dim }[y/n] \n> ${ Reset }`, regex);
-          
-        };
-        
-        
-        
-        
-        const createFilesListSync = (path, filesToCopy = [], foldersToMake = []) => {
-          
-          const files = fs.readdirSync(path.from);
-          
-          files.forEach((file) => {
-            
-            const fileSource = `${ path.from }/${ file }`;
-            const fileDestination = fileSource.replace(`${ path.from }/`, path.to);
-            
-            if (isDirectory(fileSource)) {
-              
-              createFilesListSync({
-                from: fileSource,
-                to: `${ fileDestination }/`,
-              }, filesToCopy, foldersToMake);
-              
-              foldersToMake.push(fileDestination);
-              
-            } else {
-              
-              filesToCopy.push({
-                from: fileSource,
-                to: fileDestination,
-              });
-              
-            }
-            
-          });
-          
-          return {
-            filesToCopy,
-            foldersToMake,
-          };
-          
-        };
-        
-        
-        
-        const createFilesList = (path) => {
-          
-          return new Promise((resolve) => {
-            const list = createFilesListSync(path);
-            if (Array.isArray(list.filesToCopy) && Array.isArray(list.foldersToMake)) {
-              resolve(list);
-            }
-          });
-          
-        };
-        
-        
-        
-        const copyFileSync = (file, callback) => {
+      if (choicesRegEx) {
+        if (choicesRegEx.test(userInput)) {
+          resolve(userInput);
+        } else {
+          reject(userInput);
+        }
+      } else {
+        resolve(userInput);
+      }
+      console.log('');
+      prompt.close();
+    });
+    
+  });
+  
+};
+
+
+
+const yesno = (textPrompt) => {
+  
+  const regex = new RegExp(/^(y|yes)$/gi);
+  
+  return getUserInput(`${ textPrompt } ${ Dim }[y/n] \n> ${ Reset }`, regex);
+  
+};
+
+
+
+
+const createFilesListSync = (path, filesToCopy = [], foldersToMake = []) => {
+  
+  const files = fs.readdirSync(path.from);
+  
+  files.forEach((file) => {
+    
+    const fileSource = `${ path.from }/${ file }`;
+    const fileDestination = fileSource.replace(`${ path.from }/`, path.to);
+    
+    if (isDirectory(fileSource)) {
+      
+      createFilesListSync({
+        from: fileSource,
+        to: `${ fileDestination }/`,
+      }, filesToCopy, foldersToMake);
+      
+      foldersToMake.push(fileDestination);
+      
+    } else {
+      
+      filesToCopy.push({
+        from: fileSource,
+        to: fileDestination,
+      });
+      
+    }
+    
+  });
+  
+  return {
+    filesToCopy,
+    foldersToMake,
+  };
+  
+};
+
+
+
+const createFilesList = (path) => {
+  
+  return new Promise((resolve) => {
+    const list = createFilesListSync(path);
+    if (Array.isArray(list.filesToCopy) && Array.isArray(list.foldersToMake)) {
+      resolve(list);
+    }
+  });
+  
+};
+
+
+
+const copyFileSync = (file, callback) => {
           
   fs.copyFile(file.from, file.to, (err) => {
     if (err) console.error(err);
@@ -347,7 +348,7 @@ class MultipleChoice {
           return;
 
         case keyCode.ctrlC:
-          process.exit();
+          this.exit();
           return;
 
         default:
@@ -360,7 +361,8 @@ class MultipleChoice {
     this.question = question;
 
     return new Promise((resolve, reject) => {
-      console.log(`${ FgCyan }${ question }`, Reset);
+      console.log(HideCursor);
+      console.log(`${ FgCyan }${ Bright }${ question }`, Reset);
 
       this.renderOptions();
 
@@ -381,9 +383,9 @@ class MultipleChoice {
     this.options.forEach((option, index) => {
       const optionText = `${ option }`;
       if (index === this.current) {
-        console.log(`${ ClearLine }${ FgYellow } \u2714 ${ optionText }`, Reset);
+        console.log(` ${ ClearLine }${ FgYellow }${ Bright }\u2714 ${ optionText }`, Reset);
       } else {
-        console.log(`${ ClearLine }${ Dim } \u2022 ${ optionText }`, Reset);
+        console.log(` ${ ClearLine }${ Dim }\u2022 ${ optionText }`, Reset);
       }
     });
   }
@@ -408,37 +410,31 @@ class MultipleChoice {
     const selectedOption = this.options[this.current];
     
     const consoleClear = `\x1b[${ this.options.length }A\x1b[0J`;
-    // const consoleQuestion = `${ FgCyan }${ this.question }`;
-    const consoleHint = `${ Dim }a:${ Reset }`;
-    const consoleAnswer = `${ FgYellow }${ selectedOption }${ Reset }`;
+    const consolePrompt = `${ Dim }${ Bright }>${ Reset }`;
+    const consoleAnswer = `${ FgYellow }${ Bright }${ selectedOption }${ Reset }`;
 
-    console.log(`${ consoleClear }${ consoleHint } ${ consoleAnswer }`);
+    console.log(`${ consoleClear }${ consolePrompt } ${ consoleAnswer }\n`, ShowCursor);
     
     this.selected = true;
     this.onSelect();
+  }
+
+  exit() {
+    const consoleClear = `\x1b[${ this.options.length }A\x1b[0J`;
+    const consolePrompt = `${ Dim }${ Bright }>${ Reset }`;
+    const consoleAnswer = `${ Dim }None Selected${ Reset }`;
+
+    console.log(`${ consoleClear }${ consolePrompt } ${ consoleAnswer }`, ShowCursor);
+    console.log(`\n${ BgRed } EXITED ${ Reset }`);
+
+    process.exit();
   }
 }
 
 
 
-const options = [
-  'Apple',
-  'Orange',
-  'Grapes',
-  'Strawberry',
-  'Banana',
-];
-
-const mc = new MultipleChoice(options);
-
-mc.prompt('What is your favorite fruit?')
-  .then((res) => {
 
 
-  });
-
-
-  
 console.log(ClearScreen);
 console.log(MoveCursorTopLeft);
 
@@ -447,23 +443,38 @@ console.log(`${ Dim }~~~~~~~~~~~~${ Reset }\n`);
 
 yesno('Do you want to continue?')
   .then((input) => {
-    
-    const copyOrder = [
-      {
-        from: sourcePath,
-        to: '',
-        title: 'Essentials',
-      },
-      {
-        from: `${ __dirname }/prebuilt/router`,
-        to: 'src/',
-        title: 'Router',
-      }
+  
+    const options = [
+      'Apple',
+      'Orange',
+      'Grapes',
+      'Strawberry',
+      'Banana',
     ];
+    
+    const mc = new MultipleChoice(options);
+    
+    mc.prompt('What is your favorite fruit?')
+      .then((res) => {
+        
+        const copyOrder = [
+          {
+            from: sourcePath,
+            to: '',
+            title: 'Essentials',
+          },
+          {
+            from: `${ __dirname }/prebuilt/router`,
+            to: 'src/',
+            title: 'Router',
+          }
+        ];
+    
+        runInOrder(copyAllFiles, copyOrder)
+          .then(() => {
+            console.log(`\n${ BgCyan }${ FgWhite }${ Bright } DONE ${ Reset }`);
+          });
 
-    runInOrder(copyAllFiles, copyOrder)
-      .then(() => {
-        console.log(`\n${ BgCyan }${ FgWhite }${ Bright } DONE ${ Reset }`);
       });
 
   })
