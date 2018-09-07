@@ -97,6 +97,41 @@ const yesno = (textPrompt) => {
 
 
 
+const getCursorPosition = () => {
+  return new Promise((resolve, reject) => {
+
+    process.stdin.setRawMode(true);
+    process.stdin.setEncoding('utf8');
+    process.stdin.resume();
+    
+    const closeInput = () => {
+      process.stdin.pause();
+      reject();
+    };
+
+    console.log('\x1b[1A\x1b[6n');
+
+    process.stdin.on('data', (input) => {
+      const posMatch = input.match(/\d+/gi);
+
+      if (posMatch.length === 2) {
+        const cursorPosition = {
+          v: parseInt(posMatch[0]),
+          h: parseInt(posMatch[1]),
+        };
+        process.stdin.pause();
+        resolve(cursorPosition);
+      } else {
+        closeInput();
+      }
+
+    });
+
+    setTimeout(closeInput, 1000);
+  });
+};
+
+
 
 const createFilesListSync = (path, filesToCopy = [], foldersToMake = []) => {
   
