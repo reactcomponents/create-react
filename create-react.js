@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 const fs = require('fs');
-const readline = require('readline');
-const childProcess = require('child_process');
+
+const { yesno } = require('user-input-cli-test');
+const MultipleChoice = require('multiple-choice-cli-test');
 
 const ClearScreen = '\x1b[2J';
 const ClearLine = '\x1b[K';
@@ -54,45 +55,6 @@ const sourcePath = `${ __dirname }/source`;
 
 const isDirectory = (directoryPath) => {
   return fs.statSync(directoryPath).isDirectory();
-};
-
-
-
-const getUserInput = (textPrompt, choicesRegEx) => {
-  
-  return new Promise((resolve, reject) => {
-    
-    const prompt = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout,
-    });
-    
-    prompt.question(textPrompt, (userInput) => {
-      if (choicesRegEx) {
-        if (choicesRegEx.test(userInput)) {
-          resolve(userInput);
-        } else {
-          reject(userInput);
-        }
-      } else {
-        resolve(userInput);
-      }
-      console.log('');
-      prompt.close();
-    });
-    
-  });
-  
-};
-
-
-
-const yesno = (textPrompt) => {
-  
-  const regex = new RegExp(/^(y|yes)$/gi);
-  
-  return getUserInput(`${ textPrompt } ${ Dim }[y/n] \n> ${ Reset }`, regex);
-  
 };
 
 
@@ -356,120 +318,6 @@ const runInOrder = (fn, arguments = []) => {
 
 
 
-class MultipleChoice {
-  constructor(options) {
-    this.question = '';
-    this.options = options;
-    this.current = 0;
-    this.selected = false;
-
-    this.onSelect = () => {  };
-
-    process.stdin.setRawMode(true);
-    process.stdin.setEncoding('utf8');
-
-    process.stdin.on('data', (key) => {
-      switch (key) {
-        case keyCode.up:
-          this.moveUp();
-          return;
-
-        case keyCode.down:
-          this.moveDown();
-          return;
-
-        case keyCode.enter:
-          this.select();
-          return;
-
-        case keyCode.ctrlC:
-          this.exit();
-          return;
-
-        default:
-          return;
-      }
-    });
-  }
-
-  prompt(question) {
-    this.question = question;
-
-    return new Promise((resolve, reject) => {
-      console.log(HideCursor);
-      console.log(`${ FgCyan }${ Bright }${ question }`, Reset);
-
-      this.renderOptions();
-
-      process.stdin.resume();
-      
-      this.onSelect = () => {
-        process.stdin.pause();
-        resolve({
-          selection: this.options[this.current],
-          index: this.current,
-          options: this.options,
-        });
-      };
-    });
-  }
-
-  renderOptions() {
-    this.options.forEach((option, index) => {
-      const optionText = `${ option }`;
-      if (index === this.current) {
-        console.log(` ${ ClearLine }${ FgYellow }${ Bright }\u2714 ${ optionText }`, Reset);
-      } else {
-        console.log(` ${ ClearLine }${ Dim }\u2022 ${ optionText }`, Reset);
-      }
-    });
-  }
-
-  moveUp() {
-    if (this.current > 0) {
-      this.current--;
-    }
-    console.log(`\x1b[${ this.options.length + 1 }A`);
-    this.renderOptions();
-  }
-
-  moveDown() {
-    if (this.current < this.options.length - 1) {
-      this.current++;
-    }
-    console.log(`\x1b[${ this.options.length + 1 }A`);
-    this.renderOptions();
-  }
-
-  select() {
-    const selectedOption = this.options[this.current];
-    
-    const consoleClear = `\x1b[${ this.options.length }A\x1b[0J`;
-    const consolePrompt = `${ Dim }${ Bright }>${ Reset }`;
-    const consoleAnswer = `${ FgYellow }${ Bright }${ selectedOption }${ Reset }`;
-
-    console.log(`${ consoleClear }${ consolePrompt } ${ consoleAnswer }\n`, ShowCursor);
-    
-    this.selected = true;
-    this.onSelect();
-  }
-
-  exit() {
-    const consoleClear = `\x1b[${ this.options.length }A\x1b[0J`;
-    const consolePrompt = `${ Dim }${ Bright }>${ Reset }`;
-    const consoleAnswer = `${ Dim }None Selected${ Reset }`;
-
-    console.log(`${ consoleClear }${ consolePrompt } ${ consoleAnswer }`, ShowCursor);
-    console.log(`\n${ BgRed } EXITED ${ Reset }`);
-
-    process.exit();
-  }
-}
-
-
-
-
-
 console.log(ClearScreen);
 console.log(MoveCursorTopLeft);
 
@@ -494,7 +342,7 @@ yesno('Do you want to continue?')
         
         const copyOrder = [
           {
-            from: sourcePath,
+            from: `${ sourcePath }/react/core`,
             to: '',
             title: 'Essentials',
           },
