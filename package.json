@@ -1,6 +1,6 @@
 {
-  "name": "create-react",
-  "version": "1.0.0",
+  "name": "@willsquad/create-react",
+  "version": "0.0.2",
   "description": "",
   "main": "create-react.js",
   "scripts": {
@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/reactcomponents/create-react#readme",
   "dependencies": {
+    "@willsquad/fs-utilities": "0.0.1",
     "multiple-choice-cli-test": "^1.0.1",
     "user-input-cli-test": "^1.0.0"
   }
