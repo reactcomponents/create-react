@@ -19,6 +19,7 @@ const BgCyan = '\x1b[46m';
 const sourcePath = `${ __dirname }/source`;
 
 
+
 const runInOrder = (fn, arguments = []) => {
 
   return new Promise((resolve, reject) => {
@@ -27,17 +28,30 @@ const runInOrder = (fn, arguments = []) => {
       
       const thisArgument = arguments.shift();
 
-      fn(thisArgument)
-        .then(() => {
-          
-          if (arguments.length > 0) {
-            recur();
-          } else {
-            resolve();
-          }
+      const continueRun = () => {
 
-        })
-        .catch((err) => reject(err));
+        if (arguments.length > 0) {
+          recur();
+        } else {
+          resolve();
+        }
+
+      };
+
+      const fnReturned = fn(thisArgument);
+
+      if (fnReturned instanceof Promise) {
+
+        fnReturned
+          .then(continueRun)
+          .catch((err) => reject(err));
+
+      } else {
+
+        continueRun();
+
+      }
+
     };
 
     recur();
@@ -45,7 +59,6 @@ const runInOrder = (fn, arguments = []) => {
   });
 
 };
-
 
 
 console.log(ClearScreen);
