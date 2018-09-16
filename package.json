@@ -23,6 +23,7 @@
   "homepage": "https://github.com/reactcomponents/create-react#readme",
   "dependencies": {
     "@willsquad/fs-utilities": "0.0.1",
+    "@willsquad/run-in-order": "0.0.1",
     "multiple-choice-cli-test": "^1.0.1",
     "user-input-cli-test": "^1.0.0"
   }
